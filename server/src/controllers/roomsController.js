@@ -25,8 +25,61 @@ export default class RoomsController {
         this.#replyWithActiveUsers(socket, updatedRoom.users);
     }
 
+    disconnect(socket) {
+        this.#logoutUser(socket);
+        console.log('Disconnected ', socket.id);
+    }
+
+    #logoutUser(socket){
+        const userId = socket.id;
+        const user = this.#users.get(userId);
+        if(!user){
+            return;
+        }
+        const roomId = user.roomId;
+        this.#users.delete(userId);
+
+        const room = this.rooms.get(roomId);
+        if(!room){
+            return;
+        }
+
+        const toBeDeleted = [...room.users].find(user => user.id === userId);
+        room.users.delete(toBeDeleted);
+
+        if(room.users.size === 0){
+            this.rooms.delete(roomId);
+            return;
+        }
+
+        const OwnerDisconected = room.owner.id === userId;
+        if(OwnerDisconected){
+            room.owner = this.#getNewRoomOwner(room, socket);
+        }
+
+        this.rooms.set(roomId, room);
+
+        socket.to(roomId).emit(constants.event.USER_DISCONNECTED, user);
+    }
+
+    #getNewRoomOwner(room, socket){
+        const users = [...room.users];
+        const activeSpeaker = users.find(user => user.isSpeaker);
+        const newOwner = activeSpeaker ? activeSpeaker : users[0];
+        newOwner.isSpeaker = true;
+        const updatedUser = this.#updateGlobalUserData(newOwner);
+
+        this.#notifyUserProfileUpgrade(socket, newOwner, 'new Owner')
+
+        return updatedUser;
+    }
+
+    #notifyUserProfileUpgrade(socket, user, change){
+        socket.to(user.roomId).emit(constants.event.UPGRADE_USER_PERMISSION, {user, change});
+    }
+
     #replyWithActiveUsers(socket, users){
-        socket.emit(constants.event.LOBBY_UPDATED, [...users.values()]);
+        socket.emit(constants.event.ROOM_UPDATED, [...users.values()]);
     }
 
     #notifyUsersOnRoom(socket, roomId, event, data) {

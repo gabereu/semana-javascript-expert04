@@ -3,6 +3,8 @@ export const constants = {
         USER_CONNECTED: 'userConnection',
         USER_DISCONNECTED: 'userDisconnection',
         JOIN_ROOM: 'joinRoom',
+        ROOM_UPDATED: 'roomUpdated',
+        UPGRADE_USER_PERMISSION: 'upgradeUserPermission',
         LOBBY_UPDATED: 'lobbyUpdated',
     }
 }
