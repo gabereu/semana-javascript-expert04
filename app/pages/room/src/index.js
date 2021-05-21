@@ -1,5 +1,8 @@
 import { constants } from "../../_shared/constants.js";
+import Media from "../../_shared/media.js";
+import PeerBuilder from "../../_shared/peerBuilder.js";
 import RoomCrontroller from "./controller.js";
+import RoomService from "./service.js";
 import RoomSocketBuilder from "./util/roomScoket.js";
 import RoomView from "./view.js";
 
@@ -18,17 +21,25 @@ const user = {
 
 const roomInfo = { user, room };
 
+const peerBuilder = new PeerBuilder({
+    peerConfig: constants.peerConfig,
+});
+
 const socketBuilder = new RoomSocketBuilder({
     socketUrl: constants.socketUrl,
     namespace: constants.socketNamespaces.room,
+});
+
+const roomService = new RoomService({
+    media: Media,
 });
 
 const roomController = new RoomCrontroller({
     socketBuilder,
     roomInfo,
     view: RoomView,
+    peerBuilder,
+    roomService,
 });
 
 roomController.initialize();
-
-// 
