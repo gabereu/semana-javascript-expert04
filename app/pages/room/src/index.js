@@ -1,6 +1,7 @@
 import { constants } from "../../_shared/constants.js";
 import Media from "../../_shared/media.js";
 import PeerBuilder from "../../_shared/peerBuilder.js";
+import UserDb from "../../_shared/userDB.js";
 import RoomCrontroller from "./controller.js";
 import RoomService from "./service.js";
 import RoomSocketBuilder from "./util/roomScoket.js";
@@ -13,11 +14,16 @@ const urlData = keys.map(key => [key, urlParams.get(key)]);
 
 const room = Object.fromEntries(urlData);
 
-const user = {
-    img: 'https://cdn4.iconfinder.com/data/icons/avatars-xmas-giveaway/128/pilot_traveller_person_avatar-256.png',
-    username: prompt('Username'),
-    // username: 'Gabriel',
-};
+// const user = {
+//     img: 'https://cdn4.iconfinder.com/data/icons/avatars-xmas-giveaway/128/pilot_traveller_person_avatar-256.png',
+//     username: prompt('Username'),
+//     // username: 'Gabriel',
+// };
+
+if(!UserDb.hasUser()){
+    RoomView.redirectToLogin();
+}
+const user = UserDb.get();
 
 const roomInfo = { user, room };
 
