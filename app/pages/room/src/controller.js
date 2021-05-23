@@ -2,10 +2,11 @@ import { constants } from "../../_shared/constants.js";
 import PeerBuilder from "../../_shared/peerBuilder.js";
 import Attendee from "./entities/Attendee.js";
 import RoomService from "./service.js";
+import RoomSocketBuilder from "./util/roomScoket.js";
 import RoomView from "./view.js";
 
 export default class RoomCrontroller {
-    constructor({ roomInfo, socketBuilder, view = RoomView, peerBuilder = new PeerBuilder(), roomService = new RoomService() }) {
+    constructor({ roomInfo, socketBuilder = new RoomSocketBuilder(), view = RoomView, peerBuilder = new PeerBuilder(), roomService = new RoomService() }) {
         this.socketBuilder = socketBuilder;
         this.roomInfo = roomInfo;
         this.view = view;
@@ -22,8 +23,23 @@ export default class RoomCrontroller {
     }
 
     _setupViewEvents(){
+        this.view.configureLeaveButton();
+        this.view.configureMuteButton(this._onMutePressed());
+        this.view.configureClapButton(this._onClapPressed());
         this.view.updateUserImage(this.roomInfo.user);
         this.view.updateRoomTopic(this.roomInfo.room);
+    }
+
+    _onMutePressed() {
+        return async () => {
+            await this.roomService.toggleAudioActivation();
+        }
+    }
+
+    _onClapPressed() {
+        return () => {
+            this.socket.emit(constants.events.SPEAK_REQUEST);
+        }
     }
 
     async _setupWebRTC(){
@@ -89,9 +105,18 @@ export default class RoomCrontroller {
             .setOnUserDisconnected(this._onUserDisconnected())
             .setOnRoomUpdated(this._onRoomUpdate())
             .setOnUserProfileUpdated(this._onUserProfileUpdated())
+            .setOnSpeakRequested(this._onSpeakRequested())
             .build();
 
         return socket;
+    }
+
+    _onSpeakRequested() {
+        return (data) => {
+            const attendee = new Attendee(data);
+            const result = confirm(`${attendee.username} pode falar?`);
+            this.socket.emit(constants.events.SPEAK_ANSWER, { user: attendee, answer: result });
+        };
     }
 
     _onUserProfileUpdated(){

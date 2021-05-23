@@ -41,6 +41,34 @@ export default class RoomsController {
         this.#replyWithActiveUsers(socket, updatedRoom.users);
     }
 
+    speakRequest(socket){
+        const userId = socket.id;
+        const user = this.#users.get(userId);
+        const roomId = user?.roomId;
+        const owner = this.rooms.get(roomId)?.owner;
+        socket.to(owner.id).emit(constants.event.SPEAK_REQUEST, user);
+    }
+
+    [constants.event.SPEAK_ANSWER](socket, { answer, user }) {
+        const currentUser = this.#users.get(user.id);
+        const updatedUser = new Attendee({
+            ...currentUser,
+            isSpeaker: answer,
+        });
+
+        this.#users.set(user.id, updatedUser);
+
+        const room = this.rooms.get(updatedUser.roomId);
+        const userOnRoom = [...room.users.values()].find(user => user.id === updatedUser.id);
+        room.users.delete(userOnRoom);
+        room.users.add(updatedUser);
+        this.rooms.set(room.id, room);
+
+        const change = answer ? 'new Speaker' : 'Speak Answer';
+
+        this.#notifyUserProfileUpgrade(socket, updatedUser, change, true);
+    }
+
     disconnect(socket) {
         this.#logoutUser(socket);
         console.log('Disconnected ', socket.id);
@@ -85,13 +113,16 @@ export default class RoomsController {
         newOwner.isSpeaker = true;
         const updatedUser = this.#updateGlobalUserData(newOwner);
 
-        this.#notifyUserProfileUpgrade(socket, newOwner, 'new Owner')
+        this.#notifyUserProfileUpgrade(socket, newOwner, 'new Owner');
 
         return updatedUser;
     }
 
-    #notifyUserProfileUpgrade(socket, user, change){
+    #notifyUserProfileUpgrade(socket, user, change, forSelf = false){
         socket.to(user.roomId).emit(constants.event.UPGRADE_USER_PERMISSION, {user, change});
+        if(forSelf){
+            socket.emit(constants.event.UPGRADE_USER_PERMISSION, {user, change});
+        }
     }
 
     #replyWithActiveUsers(socket, users){

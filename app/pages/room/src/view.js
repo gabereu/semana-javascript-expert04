@@ -1,3 +1,4 @@
+import { constants } from "../../_shared/constants.js";
 import View from "../../_shared/View.js";
 import Attendee from "./entities/Attendee.js";
 import getAttendeeTemplate from "./templates/attendeeTemplate.js";
@@ -8,6 +9,8 @@ const attendeeGrid = document.getElementById('gridAttendees');
 const btnClipBoard = document.getElementById('btnClipBoard');
 const btnMicrophone = document.getElementById('btnMicrophone');
 const btnClap = document.getElementById('btnClap');
+const toggleImage = document.getElementById('toggleImage');
+const btnLeave = document.getElementById('btnLeave');
 
 export default class RoomView extends View {
 
@@ -78,5 +81,59 @@ export default class RoomView extends View {
         });
 
         return audio;
+    }
+
+    static configureClapButton(command){
+        btnClap.addEventListener('click', RoomView._onClapClick(command))
+    }
+
+    static configureLeaveButton(){
+        btnLeave.addEventListener('click', () => RoomView._redirectToLobby())
+    }
+
+    static _redirectToLobby(){
+        window.location = constants.pages.lobby;
+    }
+
+    static configureMuteButton(command){
+        btnMicrophone.addEventListener('click', () => {
+            command();
+            RoomView._toogleMicrophoneIcon();
+        });
+    }
+
+    static _toogleMicrophoneIcon() {
+        const icon = btnMicrophone.firstElementChild;
+        const classes = [...icon.classList]
+
+        const inactiveMicrophoneClass = 'fa-microphone-slash';
+        const activeMicrophoneClass = 'fa-microphone';
+
+        const microphoneIsInactive = classes.includes(inactiveMicrophoneClass);
+
+        if(microphoneIsInactive) {
+            icon.classList.remove(inactiveMicrophoneClass)
+            icon.classList.add(activeMicrophoneClass)
+            return;
+        }
+
+        icon.classList.remove(activeMicrophoneClass)
+        icon.classList.add(inactiveMicrophoneClass)
+
+    }
+
+    static _onClapClick(command){
+        return () => {
+            command()
+            const basePath = './../../assets/icons/';
+            const handInactive = 'hand.svg';
+            const handActive = 'hand-solid.svg';
+
+            if (toggleImage.src.match(handInactive)){
+                toggleImage.src = basePath + handActive;
+            } else {
+                toggleImage.src = basePath + handInactive;
+            }
+        }
     }
 }

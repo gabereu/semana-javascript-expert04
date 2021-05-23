@@ -19,5 +19,11 @@ export const constants = {
         ROOM_UPDATED: 'roomUpdated',
         UPGRADE_USER_PERMISSION: 'upgradeUserPermission',
         LOBBY_UPDATED: 'lobbyUpdated',
+        SPEAK_REQUEST: 'speakRequest',
+        SPEAK_ANSWER: 'speakAnswer',
+    },
+    pages: {
+        lobby: '/pages/lobby',
+        login: '/pages/login',
     },
 };

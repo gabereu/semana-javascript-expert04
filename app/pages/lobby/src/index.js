@@ -17,4 +17,8 @@ const lobbyController = new LobbyController({
     socketBuilder,
     user,
 });
-await lobbyController.initialize()
+
+lobbyController.initialize()
+    .catch(error => {
+        alert(error.message);
+    });
